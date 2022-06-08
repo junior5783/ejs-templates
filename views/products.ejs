@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Lista de producstos</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body>
+        <div class="mt-6 md:container md:mx-auto">
+            <h5 class="text-2xl font-normal leading-normal mt-0 mb-2 text-neutral-800">
+                Vista de productos
+            </h5>
+            <% if(products.length) { %>
+                <table class="mt-6 w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-white bg-emerald-500 dark:bg-emerald-500 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Nombre</th>
+                            <th scope="col" class="px-6 py-3">Precio</th>
+                            <th scope="col" class="px-6 py-3">Foto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% products.forEach(product => { %>
+                            <tr>
+                                <td class="px-6 py-4"><%= product.title %></td>
+                                <td class="px-6 py-4"><%= product.price %></td>
+                                <td class="px-6 py-4"><img class="w-10 h-10 rounded-full mr-4" src="<%= product.thumbnail %>"></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg dark:bg-yellow-200 dark:text-yellow-800" role="alert">
+                    <span class="font-medium">Alerta!</span> No se han encontrado productos
+                </div>
+            <% } %>
+            <div class="mt-6 text-right">
+                <a href="/">
+                    <button type="button" class="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 px-5 py-2.5 text-sm leading-5 rounded-md font-semibold text-white">
+                        Registrar producto
+                    </button>
+                </a>
+            </div>
+        </div>
+    </body>
+</html>
