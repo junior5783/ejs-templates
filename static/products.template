@@ -1,0 +1,25 @@
+{{#if products}}
+    <div class="mt-6 md:container md:mx-auto">
+        <h5 class="text-2xl font-normal leading-normal mt-0 mb-2 text-neutral-800">
+            Vista de productos
+        </h5>
+        <table class="mt-6 w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-white bg-emerald-500 dark:bg-emerald-500 dark:text-gray-400">
+                <tr>
+                    <th scope="col" class="px-6 py-3">Nombre</th>
+                    <th scope="col" class="px-6 py-3">Precio</th>
+                    <th scope="col" class="px-6 py-3">Foto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each products}}
+                    <tr>
+                        <td class="px-6 py-4">{{title}}</td>
+                        <td class="px-6 py-4">{{price}} </td>
+                        <td class="px-6 py-4"><img class="w-10 h-10 rounded-full mr-4" src="{{thumbnail}}"></td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+{{/if}}

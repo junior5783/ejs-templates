@@ -3,6 +3,8 @@
     <head>
         <title>Mantenimiento de productos</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
     </head>
     <body>
         <div class="mt-20 md:container md:mx-auto">
@@ -31,10 +33,8 @@
                     </div>
                    
                     <div class="mt-6 text-right">
-                        <a href="/productos">
-                            <button type="button" class="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 px-5 py-2.5 text-sm leading-5 rounded-md font-semibold text-white">
-                                Ver productos
-                            </button>
+                        <a class="inline-block align-baseline font-bold text-sm text-emerald-500" href="/productos">
+                            Ver productos
                         </a>
                         <button class="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 px-5 py-2.5 text-sm leading-5 rounded-md font-semibold text-white">
                             Registrar
@@ -42,6 +42,109 @@
                     </div>
                 </form>
             </div>
+
+            <div id="product-list"></div>
+
+
+            <!-- User messages -->
+            <section class="flex flex-col justify-center antialiased mt-20 p-4">
+                <div class="h-full">
+                    <form id="form-messages" class="space-y-4 text-gray-700 ">
+                        <div class="flex flex-wrap">
+                            <div class="w-full px-2 md:w-1/3">
+                                <input placeholder="Ingrese un email" name="email" class="w-full h-10 px-3 text-base placeholder-gray-600 border rounded-lg focus:shadow-outline" type="email"/>
+                            </div>
+                            <div class="w-full px-2 md:w-1/3">
+                                <input placeholder="Ingrese un mensaje" name="message" class="w-full h-10 px-3 text-base placeholder-gray-600 border rounded-lg focus:shadow-outline" type="text"/>
+                            </div>
+                            <div class="w-full px-2 md:w-1/3">
+                                <button type="submit" class="h-10 px-5 text-black-700 transition-colors duration-150 border border-emerald-500 rounded-lg focus:shadow-outline hover:bg-emerald-500 hover:text-emerald-100">Enviar</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Table -->
+                    <div class="w-full mx-auto bg-white shadow-lg rounded-sm border border-gray-200 mt-10">
+                        <header class="px-5 py-4 border-b border-gray-100">
+                            <h2 class="font-semibold text-gray-800">Centro de Mensajes</h2>
+                        </header>
+                        <div class="p-3">
+                            <div class="overflow-x-auto">
+                                <table class="table-auto w-full">
+                                    <thead class="text-xs font-semibold uppercase text-gray-400 bg-gray-50">
+                                        <tr>
+                                            <th class="p-2 whitespace-nowrap">
+                                                <div class="font-semibold text-left">Email</div>
+                                            </th>
+                                            <th class="p-2 whitespace-nowrap">
+                                                <div class="font-semibold text-left">Fecha y Hora</div>
+                                            </th>
+                                            <th class="p-2 whitespace-nowrap">
+                                                <div class="font-semibold text-left">Mensaje</div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="message-center" class="text-sm divide-y divide-gray-100">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
+        <script>
+            const socket = io();
+            socket.on('products', products => {
+               fetch('/static/products.template')
+               .then(response => response.text())
+               .then(data => {
+                    const template = Handlebars.compile(data);
+                    const productsHtml = template({ products: products});
+
+                    let content = document.getElementById('product-list');
+                    content.innerHTML = productsHtml;
+               });
+            });
+
+
+            const form = document.getElementById('form-messages');
+
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+
+                const email = event.target.email.value;
+                const message = event.target.message.value;
+                const date = `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+
+                event.target.email.value = "";
+                event.target.message.value = "";
+                socket.emit('messages', {email, message, date});
+            });
+
+            socket.on('messages', messages => {
+                const messageCenterTable = document.getElementById('message-center');
+                const tableHtml = messages.map(({email, message, date}) => {
+                    return `
+                        <tr>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 flex-shrink-0 mr-2 sm:mr-3"><img class="rounded-full" src="https://cdn2.iconfinder.com/data/icons/ios-7-icons/50/user_male2-512.png" width="40" height="40" alt="Alex Shatov"></div>
+                                    <div class="font-medium text-gray-800">${email}</div>
+                                </div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-left">${date}</div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-left font-medium text-green-500">${message}</div>
+                            </td>
+                        </tr>
+                    `
+                }).join('');
+
+                messageCenterTable.innerHTML = tableHtml;
+            });
+        </script>
     </body>
 </html>

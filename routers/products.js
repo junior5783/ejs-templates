@@ -3,6 +3,10 @@ const {checkSchema, validationResult} = require('express-validator');
 const {Router} = express;
 const {getProductId, getProductById} = require('../utils/productUtils');
 const router = Router();
+const Contenedor = require('../utils/Contenedor');
+
+/* El constructor de contenedor recibe toda la ruta del archivo */
+const contenedor = new Contenedor('messages.txt');
 
 const productSchema = {
     id: {
@@ -93,4 +97,20 @@ router.delete('/:id', (request, response) => {
     response.status(200).json({success: true, message: 'Producto eliminado'});
 });
 
-module.exports = router;
+module.exports = io => {
+    io.on('connection', async socket => {
+        const messagesDB = await contenedor.getAll();
+        
+        console.log(`User has been conected: ${socket.id}`)
+        io.emit('products', productsDB);
+        io.emit('messages', messagesDB);
+
+        socket.on('messages', async message => {
+            await contenedor.save(message);
+            const messagesDB = await contenedor.getAll();
+
+            io.emit('messages', messagesDB);
+        });
+    });
+    return router;
+};
