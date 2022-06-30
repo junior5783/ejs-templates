@@ -1,12 +1,11 @@
 const express = require('express');
 const {checkSchema, validationResult} = require('express-validator');
 const {Router} = express;
-const {getProductId, getProductById} = require('../utils/productUtils');
 const router = Router();
-const Contenedor = require('../utils/Contenedor');
-
-/* El constructor de contenedor recibe toda la ruta del archivo */
-const contenedor = new Contenedor('messages.txt');
+const ProductRepository = require('../repositories/products-repository');
+const MessageRepository = require('../repositories/message-repository');
+const productRepository = new ProductRepository();
+const messagesRepository = new MessageRepository();
 
 const productSchema = {
     id: {
@@ -32,21 +31,10 @@ const productSchema = {
     }
 };
 
-let productsDB = [];
+router.get('/', async (request, response) => {
+    const products = await productRepository.getAll();
 
-router.get('/', (request, response) => {
-    response.render('products.ejs', {products: productsDB});
-});
-
-router.get('/:id', (request, response) => {
-    const {id} = request.params;
-    const product = getProductById(productsDB, id);
-
-    if(!product){
-        return response.status(404).json({"error": "Producto no encontrado"});
-    }
-
-    response.json(product);
+    response.render('products.ejs', {products});
 });
 
 router.post('/', checkSchema(productSchema), (request, response) => {
@@ -55,61 +43,26 @@ router.post('/', checkSchema(productSchema), (request, response) => {
     if (!errors.isEmpty()) {
         return response.status(400).json({errors: errors.array()});
     }
-    
-    const id = getProductId(productsDB);
 
-    productsDB.push({id, ...request.body});
+    productRepository.save(request.body);
     response.redirect('/');
-});
-
-router.put('/:id', checkSchema(productSchema), (request, response) => {
-    const errors = validationResult(request);
-
-    if (!errors.isEmpty()){
-        return response.status(400).json({errors: errors.array()});
-    }
-
-    const {id} = request.params;
-    const product = getProductById(productsDB, id);
-
-    if(!product){
-        return response.status(404).json({"error": "Producto no encontrado"});
-    }
-
-    const {title, price, thumbnail} = request.body;
-
-    product.title = title;
-    product.price = price;
-    product.thumbnail = thumbnail;
-
-    response.status(200).json({success: true, message: 'Producto actualizado'});
-});
-
-router.delete('/:id', (request, response) => {
-    const {id} = request.params;
-    const product = getProductById(productsDB, id);
-
-    if(!product){
-        return response.status(404).json({"error": "Producto no encontrado"});
-    }
-
-    productsDB = productsDB.filter(({id: productId}) => productId !== Number(id));
-    response.status(200).json({success: true, message: 'Producto eliminado'});
 });
 
 module.exports = io => {
     io.on('connection', async socket => {
-        const messagesDB = await contenedor.getAll();
-        
         console.log(`User has been conected: ${socket.id}`)
-        io.emit('products', productsDB);
-        io.emit('messages', messagesDB);
+
+       const messages = await messagesRepository.getAll();
+       const products = await productRepository.getAll();
+        
+        io.emit('products', products);
+        io.emit('messages', messages);
 
         socket.on('messages', async message => {
-            await contenedor.save(message);
-            const messagesDB = await contenedor.getAll();
+            await messagesRepository.save(message);
+            const messages = await messagesRepository.getAll();
 
-            io.emit('messages', messagesDB);
+            io.emit('messages', messages);
         });
     });
     return router;
