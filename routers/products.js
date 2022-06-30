@@ -2,10 +2,12 @@ const express = require('express');
 const {checkSchema, validationResult} = require('express-validator');
 const {Router} = express;
 const router = Router();
-const ProductRepository = require('../repositories/products-repository');
-const MessageRepository = require('../repositories/message-repository');
-const productRepository = new ProductRepository();
-const messagesRepository = new MessageRepository();
+const DatabaseRepository = require('../repositories/database-repository');
+const mariaDbOptions = require('../configurations/mariaDB');
+const sqlLiteOptions = require('../configurations/sqlLite');
+
+const productRepository = new DatabaseRepository("products", mariaDbOptions);
+const messagesRepository = new DatabaseRepository("messages", sqlLiteOptions);
 
 const productSchema = {
     id: {
